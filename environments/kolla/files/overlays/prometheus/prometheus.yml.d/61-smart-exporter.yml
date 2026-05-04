@@ -3,6 +3,6 @@ scrape_configs:
     static_configs:
       - targets:
 {% for host in groups['all'] %}
-        - "{{ hostvars[host]['ansible_facts'][hostvars[host]['api_interface']]['ipv4']['address'] }}:{{ smart_exporter_port | default('9633') }}"
+        - "{{ hostvars[host]['ansible_facts'][hostvars[host]['network_interface']]['ipv4']['address'] }}:{{ smart_exporter_port | default('9633') }}"
 {% endfor %}
     scrape_interval: 300s
