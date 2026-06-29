@@ -59,13 +59,13 @@ case "$TYPE" in
       sudo find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true;;
   incremental)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true ;;
+      sudo find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true;;
   weekly)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true ;;
+      sudo find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true;;
   monthly)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true ;;
+      sudo find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
