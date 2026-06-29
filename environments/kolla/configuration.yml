@@ -21,13 +21,14 @@ database_enable_tls_internal: "no"
 # openstack
 
 # enable services
-enable_aodh: "yes"
-enable_barbican: "yes"
+enable_aodh: "no"
+enable_barbican: "no"
 enable_ceilometer: "yes"
-enable_magnum: "yes"
-enable_manila: "yes"
+enable_magnum: "no"
+enable_manila: "no"
 enable_proxysql: "yes"
 enable_skyline: "yes"
+enable_designate: "no"
 
 # optional services
 enable_ironic: "no"

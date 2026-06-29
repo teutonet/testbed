@@ -39,9 +39,9 @@ public-clouds:
     identity_api_version: 3
     image_format: raw
     block_storage_api_version: 3
-  teuto-pb1:
+  teuto-bfe2:
     auth:
-      auth_url: https://api.pb1.teutostack.de:5000
+      auth_url: https://api.bfe2.teutostack.de:5000
     regions:
       - name: RegionOne
     identity_api_version: 3

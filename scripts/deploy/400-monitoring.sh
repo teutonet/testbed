@@ -7,3 +7,4 @@ source /opt/manager-vars.sh
 osism apply netdata
 osism apply prometheus
 osism apply grafana
+osism apply setup-additional-exporter
