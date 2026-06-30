@@ -22,54 +22,60 @@ rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
 
 case "$TYPE" in
   full)
-    osism apply facts
-    osism apply mariadb_backup -e mariadb_backup_host={{ mariadb_backup_node }}
+    sudo -u dragon sism apply facts # gather facts, use daily schedules because facts have a 24h TTL
+    sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=full -e mariadb_backup_host={{ mariadb_backup_node }}
     sub="daily";   ret="{{ mariadb_backup_retention_daily }}" ;;
   incremental)
-    osism apply mariadb_backup -e mariadb_backup_type=incremental -e mariadb_backup_host={{ mariadb_backup_node }}
+    sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=incremental -e mariadb_backup_host={{ mariadb_backup_node }}
     sub="hourly";   ret="{{ mariadb_backup_retention_hourly }}" ;;
   weekly)
+    # promote last full backup to weekly backup
     sub="weekly";  ret="{{ mariadb_backup_retention_weekly }}" ;;
   monthly)
+    # promote last full backup to weekly backup
     sub="monthly"; ret="{{ mariadb_backup_retention_monthly }}" ;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
 
-# 2+3. extract/encrypt (full/incr) or promote (weekly/monthly) on control node
+# extract/encrypt (full/incr) or promote (weekly/monthly) on mariadb node
 {{ mariadb_backup_remote_exec }} {{ mariadb_backup_extract_script }} "$TYPE"
 
-# 4. pull encrypted subtree from control node to manager disk (Copy 1)
+# pull encrypted subtree from control node to manager disk (Copy 1)
 rclone_run copy \
   "{{ mariadb_backup_sftp_remote }}:{{ mariadb_backup_destination_dir_mariadb }}/${sub}" \
   "{{ mariadb_backup_destination_dir_manager }}/${sub}"
 
-# 5. upload encrypted subtree from manager disk to offsite S3 (Copy 2)
+# upload encrypted subtree from manager disk to offsite S3 (Copy 2)
 rclone_run copy \
   "{{ mariadb_backup_destination_dir_manager }}/${sub}" \
   "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}{% if mariadb_backup_s3_path %}{{ mariadb_backup_s3_path }}{% endif %}/${sub}" \
+{% if mariadb_backup_object_lock_mode +%}
   --s3-object-lock-mode {{ mariadb_backup_object_lock_mode }} \
   --s3-object-lock-retain-until-date "${ret}d"
+{% endif %}
 
 echo "mariadb-backup: ${TYPE} complete"
 
-# 5. GC the manager disk copy (non-WORM); S3 is governed by Object Lock + lifecycle
+# GC the disk copies (non-WORM); S3 is governed by Object Lock + lifecycle
 GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
 case "$TYPE" in
   full)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true
+      find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true;;
   incremental)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true
+      find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true;;
   weekly)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true
+      find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true;;
   monthly)
-      sudo find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true
+      find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
+
 # Delete empty folders
-sudo find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete 2>/dev/null || true
+find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete 2>/dev/null || true
 {{ mariadb_backup_remote_exec }} "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete 2>/dev/null || true
+
 echo "mariadb-backup: GC complete"

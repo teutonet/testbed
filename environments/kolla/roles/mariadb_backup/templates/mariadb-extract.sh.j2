@@ -42,7 +42,7 @@ latest_incr_dir() {
   [[ -n "$best_dir" ]] && printf '%s\n' "$best_dir"
 }
 
-# Build the staging-relative path from the source directory name, so the
+# Build the relative path from the source directory name, so the
 # partition reflects the backup's own timestamp (not when this script runs).
 # full-DD-MM-YYYY-<epoch>                              -> daily/YYYY/MM/DD
 # incr-HH-MM-SS-DD-MM-YYYY-since-DD-MM-YYYY-<baseepoch> -> hourly/YYYY/MM/DD/HH
@@ -94,6 +94,6 @@ echo "mariadb-extract: ${TYPE} ${name} -> ${rel}"
 
 # --- garbage collection over the staging tree ------------------------------
 # Delete files older than 2 days in docker volume
-sudo find "{{ mariadb_backup_backup_volume_dir }}" -mindepth 1 -name "*.mbs.gz" -type f -mtime 2  -delete 2>/dev/null || true
+sudo find "{{ mariadb_backup_backup_volume_dir }}" -mindepth 1 -name "*.mbs.gz" -type f -mtime 2 -delete 2>/dev/null || true
 # Delete empty directories
 sudo find "{{ mariadb_backup_backup_volume_dir }}" -type d -empty -delete 2>/dev/null || true
