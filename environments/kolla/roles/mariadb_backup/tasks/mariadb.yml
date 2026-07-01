@@ -21,7 +21,7 @@
     cmd: "gpg --import /home/dragon/backup-pub.asc"
   register: _gpg_import
   changed_when: "'imported' in _gpg_import.stderr"
-  failed_when: _gpg_import.rc != 0 and ('unchanged' not in _gpg_import.stderr or 'imported' not in _gpg_import.stderr)
+  failed_when: _gpg_import.rc != 0 and not ('unchanged' in _gpg_import.stderr or 'imported' in _gpg_import.stderr)
 
 - name: Deploy control-node extract/encrypt/promote script
   ansible.builtin.template:
