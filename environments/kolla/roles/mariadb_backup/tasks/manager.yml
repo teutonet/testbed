@@ -7,8 +7,8 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: "dragon"
-    group: "dragon"
+    owner: "root"
+    group: "root"
     mode: "0750"
   loop:
     - "{{ mariadb_backup_destination_dir_manager }}"

@@ -7,8 +7,8 @@
     group: "{{ item.owner }}"
     mode: "0750"
   loop:
-    - { path: mariadb_backup_destination_dir_mariadb, owner: "dragon" }
-    - { path: mariadb_backup_config_dir, owner: "root" }
+    - { path: "{{ mariadb_backup_destination_dir_mariadb }}", owner: "dragon" }
+    - { path: "{{ mariadb_backup_config_dir }}", owner: "root" }
 
 - name: Deploy GPG public key (from controller file)
   ansible.builtin.copy:
