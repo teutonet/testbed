@@ -22,7 +22,7 @@ rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
 
 case "$TYPE" in
   full)
-    sudo -u dragon sism apply facts # gather facts, use daily schedules because facts have a 24h TTL
+    sudo -u dragon osism apply facts # gather facts, use daily schedules because facts have a 24h TTL
     sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=full -e mariadb_backup_host={{ mariadb_backup_node }}
     sub="daily";   ret="{{ mariadb_backup_retention_daily }}" ;;
   incremental)
