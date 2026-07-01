@@ -5,7 +5,7 @@
     state: directory
     owner: "{{ item.owner }}"
     group: "{{ item.owner }}"
-    mode: "0750"
+    mode: "0755"
   loop:
     - { path: "{{ mariadb_backup_destination_dir_mariadb }}", owner: "dragon" }
     - { path: "{{ mariadb_backup_config_dir }}", owner: "root" }
@@ -19,11 +19,12 @@
     mode: "0644"
 
 - name: Import GPG public key
+  become: false
   ansible.builtin.command:
     cmd: "gpg --import {{ mariadb_backup_config_dir }}/backup-pub.asc"
   register: _gpg_import
   changed_when: "'imported' in _gpg_import.stderr"
-  failed_when: _gpg_import.rc != 0 and 'unchanged' not in _gpg_import.stderr
+  failed_when: _gpg_import.rc != 0
 
 - name: Deploy control-node extract/encrypt/promote script
   ansible.builtin.template:
