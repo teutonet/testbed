@@ -70,7 +70,7 @@
     image: docker.io/prometheuscommunity/systemd-exporter:v0.7.0
     network_mode: host
     privileged: true
-    user: root # https://github.com/prometheus-community/smartctl_exporter?tab=readme-ov-file#why-is-root-required-cant-i-add-a-user-to-the-disk-group
+    user: root
     restart_policy: unless-stopped
     pull: "{{ pull_image | default('missing') }}"
     mounts:
