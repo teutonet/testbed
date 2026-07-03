@@ -60,7 +60,7 @@
     state: started
   loop: "{{ mariadb_backup_jobs }}"
 
-- name: Deploy service-container {{ service.name }}
+- name: Deploy systemd-exporter
   community.docker.docker_container:
     log_driver: "json-file"
     log_options:
@@ -80,6 +80,3 @@
         type: bind
     command:
       - "--systemd.collector.unit-include=mariadb-backup-.*"
-  loop_control:
-    loop_var: service
-  loop: "{{ node_service_container }}"
