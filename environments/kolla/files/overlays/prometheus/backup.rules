@@ -41,3 +41,19 @@ groups:
       annotations:
         summary: Daily backup job is {{ $value }}m overdue
         description: "Daily backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: WeeklyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-weekly.timer"}) / 60 > 60*60*24*7'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Weekly backup job is {{ $value }}m overdue
+        description: "Weekly backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: MonthlyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-monthly.timer"}) / 60 > 60*60*24*31'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Monthly backup job is {{ $value }}m overdue
+        description: "Monthly backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
