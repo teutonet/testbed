@@ -74,7 +74,7 @@ mariadb_backup_s3_bucket: "mariadb-backups"
 # Flag whether to use the virtual hosted style to address buckets
 mariadb_backup_s3_virtual_hosted_style_bucket: false
 # Prefix to add before all s3 path
-mariadb_backup_s3_path: ""
+mariadb_backup_s3_prefix: ""
 # S3 region for bucket, not necessary for ceph
 mariadb_backup_s3_region: ""
 # S3 access key id
