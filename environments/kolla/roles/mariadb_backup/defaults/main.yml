@@ -96,16 +96,16 @@ mariadb_backup_retention_monthly: 365
 
 # --- Schedules (systemd OnCalendar) -----------------------------------------
 # systemd timer schedule for daily backups
-mariadb_backup_schedule_full: "*-*-* 00:00:00"
+mariadb_backup_schedule_daily: "*-*-* 00:00:00"
 # systemd timer schedule for hourly backups
-mariadb_backup_schedule_incremental: "*-*-* 01..23:00:00"
+mariadb_backup_schedule_hourly: "*-*-* 01..23:00:00"
 # systemd timer schedule for weekly backups
 mariadb_backup_schedule_weekly: "Mon *-*-* 01:00:00"
 # systemd timer schedule for monthly backups
 mariadb_backup_schedule_monthly: "*-*-01 02:00:00"
 
 mariadb_backup_jobs:
-  - { type: "full", schedule: "{{ mariadb_backup_schedule_full }}" }
-  - { type: "incremental", schedule: "{{ mariadb_backup_schedule_incremental }}" }
+  - { type: "daily", schedule: "{{ mariadb_backup_schedule_daily }}" }
+  - { type: "hourly", schedule: "{{ mariadb_backup_schedule_hourly }}" }
   - { type: "weekly", schedule: "{{ mariadb_backup_schedule_weekly }}" }
   - { type: "monthly", schedule: "{{ mariadb_backup_schedule_monthly }}" }

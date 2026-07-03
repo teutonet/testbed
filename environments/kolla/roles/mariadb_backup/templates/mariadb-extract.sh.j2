@@ -6,7 +6,7 @@
 # Ansible variables at deploy time.
 set -euo pipefail
 
-TYPE="${1:?usage: $(basename "$0") full|incremental|weekly|monthly}"
+TYPE="${1:?usage: $(basename "$0") hourly|daily|weekly|monthly}"
 read -r NOW_Y NOW_m NOW_d ISOY ISOW NOW_H <<<"$(date -u +'%Y %m %d %G %V %H')"
 
 # --- locate the source backup directory in the volume ------------------------
@@ -62,8 +62,8 @@ parse_daily_rel() {
 }
 
 case "$TYPE" in
-  full)        srcdir=$(current_full_dir); rel=$(parse_daily_rel "$(basename "${srcdir:-x}")") ;;
-  incremental) srcdir=$(latest_incr_dir);  rel=$(parse_daily_rel "$(basename "${srcdir:-x}")") ;;
+  daily)        srcdir=$(current_full_dir); rel=$(parse_daily_rel "$(basename "${srcdir:-x}")") ;;
+  hourly) srcdir=$(latest_incr_dir);  rel=$(parse_daily_rel "$(basename "${srcdir:-x}")") ;;
   weekly)      srcdir=$(current_full_dir); rel="weekly/${ISOY}/${ISOW}" ;;
   monthly)     srcdir=$(current_full_dir); rel="monthly/${NOW_Y}/${NOW_m}" ;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;

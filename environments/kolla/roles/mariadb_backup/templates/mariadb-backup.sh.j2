@@ -5,7 +5,7 @@
 # config is rendered from Ansible variables at deploy time.
 set -euo pipefail
 
-TYPE="${1:?usage: $(basename "$0") full|incremental|weekly|monthly}"
+TYPE="${1:?usage: $(basename "$0") hourly|daily|weekly|monthly}"
 
 [ -d "{{ mariadb_backup_destination_dir_manager }}" ] || mkdir -p "{{ mariadb_backup_destination_dir_manager }}"
 
@@ -21,19 +21,19 @@ rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
 }
 
 case "$TYPE" in
-  full)
+  daily)
     sudo -u dragon osism apply facts # gather facts, use daily schedules because facts have a 24h TTL
     sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=full -e mariadb_backup_host={{ mariadb_backup_node }}
-    sub="daily";   ret="{{ mariadb_backup_retention_daily }}" ;;
-  incremental)
+    ret="{{ mariadb_backup_retention_daily }}" ;;
+  hourk)
     sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=incremental -e mariadb_backup_host={{ mariadb_backup_node }}
-    sub="hourly";   ret="{{ mariadb_backup_retention_hourly }}" ;;
+    ret="{{ mariadb_backup_retention_hourly }}" ;;
   weekly)
     # promote last full backup to weekly backup
-    sub="weekly";  ret="{{ mariadb_backup_retention_weekly }}" ;;
+    ret="{{ mariadb_backup_retention_weekly }}" ;;
   monthly)
     # promote last full backup to weekly backup
-    sub="monthly"; ret="{{ mariadb_backup_retention_monthly }}" ;;
+    ret="{{ mariadb_backup_retention_monthly }}" ;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
 
@@ -42,13 +42,13 @@ esac
 
 # pull encrypted subtree from control node to manager disk (Copy 1)
 rclone_run copy \
-  "{{ mariadb_backup_sftp_remote }}:{{ mariadb_backup_destination_dir_mariadb }}/${sub}" \
-  "{{ mariadb_backup_destination_dir_manager }}/${sub}"
+  "{{ mariadb_backup_sftp_remote }}:{{ mariadb_backup_destination_dir_mariadb }}/${TYPE}" \
+  "{{ mariadb_backup_destination_dir_manager }}/${TYPE}"
 
 # upload encrypted subtree from manager disk to offsite S3 (Copy 2)
 rclone_run copy \
-  "{{ mariadb_backup_destination_dir_manager }}/${sub}" \
-  "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}/{{ mariadb_backup_s3_prefix }}${sub}" \
+  "{{ mariadb_backup_destination_dir_manager }}/${TYPE}" \
+  "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}/{{ mariadb_backup_s3_prefix }}${TYPE}" \
 {% if mariadb_backup_object_lock_mode +%}  --s3-object-lock-mode {{ mariadb_backup_object_lock_mode }} \
   --s3-object-lock-retain-until-date "${ret}d"
 {% endif %}
@@ -58,10 +58,10 @@ echo "mariadb-backup: ${TYPE} complete"
 # GC the disk copies (non-WORM); S3 is governed by Object Lock + lifecycle
 GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
 case "$TYPE" in
-  full)
+  daily)
       find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true;;
-  incremental)
+  hourly)
       find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true
       {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true;;
   weekly)
