@@ -59,3 +59,27 @@
     enabled: true
     state: started
   loop: "{{ mariadb_backup_jobs }}"
+
+- name: Deploy service-container {{ service.name }}
+  community.docker.docker_container:
+    log_driver: "json-file"
+    log_options:
+      max-size: "10m"
+      max-file: "3"
+    name: backup_systemd_exporter
+    image: docker.io/prometheuscommunity/systemd-exporter:v0.7.0
+    network_mode: host
+    privileged: true
+    user: root # https://github.com/prometheus-community/smartctl_exporter?tab=readme-ov-file#why-is-root-required-cant-i-add-a-user-to-the-disk-group
+    restart_policy: unless-stopped
+    pull: "{{ pull_image | default('missing') }}"
+    mounts:
+      - read_only: true
+        source: /var/run/dbus
+        target: /var/run/dbus
+        type: bind
+    command:
+      - "--systemd.collector.unit-include=mariadb-backup-.*"
+  loop_control:
+    loop_var: service
+  loop: "{{ node_service_container }}"
