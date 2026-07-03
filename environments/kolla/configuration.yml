@@ -123,6 +123,8 @@ om_enable_rabbitmq_quorum_queues: false
 ##########################################################
 # mariadb backup
 
+mariadb_backup_gpg_recipient: backup@testbed.osism.xyz
+mariadb_backup_node: "testbed-node-0"
 mariadb_backup_s3_endpoint: "https://api.bfe2.teutostack.de:6780"
 mariadb_backup_s3_bucket: "backup-testbed"
 mariadb_backup_s3_prefix: "bfe2/"
