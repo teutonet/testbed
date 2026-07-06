@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 # Managed by Ansible (role: mariadb_backup).
-# Orchestrates one backup run end-to-end from the manager. rclone runs as a
-# container with the config dir and the manager disk dir bind-mounted. All
-# config is rendered from Ansible variables at deploy time.
 set -euo pipefail
 
 TYPE="${1:?usage: $(basename "$0") hourly|daily|weekly|monthly}"
@@ -13,6 +10,7 @@ TYPE="${1:?usage: $(basename "$0") hourly|daily|weekly|monthly}"
 rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
   docker run --rm \
     --name mariadb_backup_rclone \
+    --network host \
     -e RCLONE_CONFIG=/config/rclone.conf \
     -v {{ mariadb_backup_rclone_config_file }}:/config/rclone.conf:ro \
     -v {{ mariadb_backup_ssh_key }}:{{ mariadb_backup_ssh_key }}:ro \
