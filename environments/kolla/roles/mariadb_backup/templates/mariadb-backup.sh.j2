@@ -14,6 +14,7 @@ rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
     -e RCLONE_CONFIG=/config/rclone.conf \
     -v {{ mariadb_backup_rclone_config_file }}:/config/rclone.conf:ro \
     -v {{ mariadb_backup_ssh_key }}:{{ mariadb_backup_ssh_key }}:ro \
+    -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
     -v "{{ mariadb_backup_destination_dir_manager }}:{{ mariadb_backup_destination_dir_manager }}" \
     {{ mariadb_backup_rclone_image_full }} $*
 }
@@ -73,6 +74,6 @@ esac
 
 # Delete empty folders
 find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete || true
-{{ mariadb_backup_remote_exec }} "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete || true
+{{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete || true
 
 echo "mariadb-backup: GC complete"

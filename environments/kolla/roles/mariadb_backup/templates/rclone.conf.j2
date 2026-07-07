@@ -9,6 +9,7 @@ key_file = {{ mariadb_backup_ssh_key }}
 shell_type = unix
 md5sum_command = md5sum
 sha1sum_command = sha1sum
+known_hosts_file = /root/.ssh/known_hosts
 
 [{{ mariadb_backup_s3_remote }}]
 type = s3
