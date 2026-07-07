@@ -34,7 +34,7 @@ mariadb_backup_volume: "mariadb_backup"
 # Path to the docker volumes
 mariadb_backup_docker_volume_dir: "/var/lib/docker/volumes"
 # Full path to the backups in the docker volume
-mariadb_backup_backup_volume_dir: "/var/lib/docker/volumes/{{ mariadb_backup_volume }}/_data"
+mariadb_backup_backup_volume_dir: "{{ mariadb_backup_docker_volume_dir }}/{{ mariadb_backup_volume }}/_data"
 
 # --- GPG (asymmetric; control node holds the PUBLIC key only) ---------------
 # Email address of the gpg public key
