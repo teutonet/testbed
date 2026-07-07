@@ -46,7 +46,7 @@ rclone_run copy \
 # upload encrypted subtree from manager disk to offsite S3 (Copy 2)
 rclone_run copy \
   "{{ mariadb_backup_destination_dir_manager }}/${TYPE}" \
-  "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}/{{ mariadb_backup_s3_prefix }}${TYPE}" \
+  "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}/${TYPE}" \
 {% if mariadb_backup_object_lock_mode +%}  --s3-object-lock-mode {{ mariadb_backup_object_lock_mode }} \
   --s3-object-lock-retain-until-date "${ret}d"
 {% endif %}
