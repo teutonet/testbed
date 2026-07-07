@@ -57,22 +57,22 @@ echo "mariadb-backup: ${TYPE} complete"
 GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
 case "$TYPE" in
   daily)
-      find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete 2>/dev/null || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete || true;;
   hourly)
-      find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete 2>/dev/null || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete|| true;;
   weekly)
-      find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete 2>/dev/null || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete || true;;
   monthly)
-      find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete 2>/dev/null || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete || true;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
 
 # Delete empty folders
-find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete 2>/dev/null || true
-{{ mariadb_backup_remote_exec }} "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete 2>/dev/null || true
+find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete || true
+{{ mariadb_backup_remote_exec }} "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete || true
 
 echo "mariadb-backup: GC complete"
