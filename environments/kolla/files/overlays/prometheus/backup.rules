@@ -1,0 +1,59 @@
+groups:
+- name: BackupSystemdExporter
+  rules:
+    - alert: BackupProbeFailed
+      expr: 'up{job="backup-systemd-exporter"} == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Backup probe failed (service {{ $labels.name }})
+        description: "Probe failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: BackupTimerInactive
+      expr: 'systemd_unit_state{job="backup-systemd-exporter", state="active", type="timer"} == 0'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Backup timer is inative (service {{ $labels.name }})
+        description: "Timer inactive\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: BackupFailed
+      expr: 'systemd_unit_state{job="backup-systemd-exporter", state="failed"} == 1'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: MariaDB Backup job failed (service {{ $labels.name }})
+        description: "Backup failed\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: HourlyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-hourly.timer"}) / 60 > 60'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Hourly backup job is {{ $value }}m overdue
+        description: "Hourly backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: DailyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-daily.timer"}) / 60 > 60*60*24'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Daily backup job is {{ $value }}m overdue
+        description: "Daily backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: WeeklyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-weekly.timer"}) / 60 > 60*60*24*7'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Weekly backup job is {{ $value }}m overdue
+        description: "Weekly backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+    - alert: MonthlyBackupMissed
+      expr: '(time() - systemd_timer_last_trigger_seconds{job="backup-systemd-exporter", name="mariadb-backup-monthly.timer"}) / 60 > 60*60*24*31'
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: Monthly backup job is {{ $value }}m overdue
+        description: "Monthly backup overdue\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

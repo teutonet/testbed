@@ -120,3 +120,17 @@ prometheus_instance_label: "{{ ansible_facts.hostname }}"
 
 om_enable_rabbitmq_high_availability: false
 om_enable_rabbitmq_quorum_queues: false
+
+##########################################################
+# mariadb backup
+
+mariadb_backup_gpg_recipient: backup@testbed.osism.xyz
+mariadb_backup_node: "testbed-node-0"
+mariadb_backup_s3_endpoint: "https://api.bfe2.teutostack.de:6780"
+mariadb_backup_s3_bucket: "backup-testbed-bfe2"
+mariadb_backup_retention_hourly: 3
+mariadb_backup_retention_daily: 7
+mariadb_backup_retention_weekly: 28
+mariadb_backup_retention_monthly: 365
+mariadb_backup_s3_region: ""
+mariadb_backup_s3_virtual_hosted_style_bucket: false

@@ -1,0 +1,109 @@
+---
+# =============================================================================
+# roles/mariadb_backup/defaults/main.yml
+# Lowest precedence — override anything via group_vars / host_vars / -e.
+# =============================================================================
+
+# --- Manager -> mariadb remote execution ------------------------------------
+# On which mariadb node should the backup be triggered
+mariadb_backup_node: ""
+# Location of the SSH key to access the mariadb node
+mariadb_backup_ssh_key: "/opt/ansible/secrets/id_rsa.operator"
+# IP address of the mariadb node
+mariadb_backup_node_address: "{{ hostvars[mariadb_backup_node]['internal_address'] }}"
+# ssh command to access mariadb node
+mariadb_backup_remote_exec: >-
+  ssh {% if mariadb_backup_ssh_key %}-i {{ mariadb_backup_ssh_key }} {% endif %}-o BatchMode=yes
+  -o StrictHostKeyChecking=no dragon@{{ mariadb_backup_node_address }}
+
+# --- Paths ------------------------------------------------------------------
+# Path where to save the config for the backup script
+mariadb_backup_config_dir: "/etc/kolla/mariadb-backup"
+# Path where to save the backups on local disk
+mariadb_backup_destination_dir: "/srv/mariadb-backup"
+# Path to overwriute the location of backups on the manager
+mariadb_backup_destination_dir_manager: "{{ mariadb_backup_destination_dir }}"
+# Path to overwriute the location of backups on the mariadb nmode
+mariadb_backup_destination_dir_mariadb: "{{ mariadb_backup_destination_dir }}"
+# Location of the extract script on the mariadb node
+mariadb_backup_extract_script: "/usr/local/bin/mariadb-extract.sh"
+# Location of the backup script on the manager ndoe
+mariadb_backup_orchestrate_script: "/usr/local/bin/mariadb-backup.sh"
+# Name of the docker volume that holds the mariadb backups created by kolla
+mariadb_backup_volume: "mariadb_backup"
+# Path to the docker volumes
+mariadb_backup_docker_volume_dir: "/var/lib/docker/volumes"
+# Full path to the backups in the docker volume
+mariadb_backup_backup_volume_dir: "{{ mariadb_backup_docker_volume_dir }}/{{ mariadb_backup_volume }}/_data"
+
+# --- GPG (asymmetric; control node holds the PUBLIC key only) ---------------
+# Email address of the gpg public key
+mariadb_backup_gpg_recipient: ""
+# Full public gpg key which is used for backup encryption
+mariadb_backup_gpg_public_key: ""
+
+# --- rclone (runs as a container; config + disk are bind mounts) ------------
+# Docker registry of rclone image
+mariadb_backup_rclone_docker_registry: "ghcr.io"
+# Name of rclone image
+mariadb_backup_rclone_docker_image: "rclone/rclone"
+# Tag of rclone image
+mariadb_backup_rclone_docker_tag: "1.74.3"
+# Full name of rclone docker image
+mariadb_backup_rclone_image_full: "{{ mariadb_backup_rclone_docker_registry }}/{{ mariadb_backup_rclone_docker_image }}:{{ mariadb_backup_rclone_docker_tag }}"
+# Path to save the rclone config
+mariadb_backup_rclone_config_file: "{{ mariadb_backup_config_dir }}/rclone.conf"
+
+# --- rclone remotes ---------------------------------------------------------
+# Name of the mariadb remote in rclone config
+mariadb_backup_sftp_remote: "sftp-mariadb"
+# Name of S3 remote in rclone config
+mariadb_backup_s3_remote: "s3offsite"
+
+# Off-site S3 remote
+# Hostname of S3 enpoint
+mariadb_backup_s3_hostname: ""
+# Port of S3 endpoint
+mariadb_backup_s3_port: 443
+# Full HTTPS s3 endpoint
+mariadb_backup_s3_endpoint: "https://{{ mariadb_backup_s3_hostname }}:{{ mariadb_backup_s3_port }}"
+# S3 compatible rclone provider https://rclone.org/s3/
+mariadb_backup_s3_rclone_provider: "Ceph"
+# S3 backups for backups
+mariadb_backup_s3_bucket: "mariadb-backups"
+# Flag whether to use the virtual hosted style to address buckets
+mariadb_backup_s3_virtual_hosted_style_bucket: false
+# S3 region for bucket, not necessary for ceph
+mariadb_backup_s3_region: ""
+# S3 access key id
+mariadb_backup_s3_access_key_id: ""
+# S3 secret access key
+mariadb_backup_s3_secret_access_key: ""
+
+# --- Object Lock / WORM (off-site S3) ---------------------------------------
+# S3 Object lock mode: GOVERNANCE | COMPLIANCE | "" (disable)
+mariadb_backup_object_lock_mode: "GOVERNANCE"
+# S3 lock rentention time in days for hourly backups
+mariadb_backup_retention_hourly: 3
+# S3 lock rentention time in days for daily backups
+mariadb_backup_retention_daily: 7
+# S3 lock rentention time in days for weekly backups
+mariadb_backup_retention_weekly: 28
+# S3 lock rentention time in days for monthly backups
+mariadb_backup_retention_monthly: 365
+
+# --- Schedules (systemd OnCalendar) -----------------------------------------
+# systemd timer schedule for daily backups
+mariadb_backup_schedule_daily: "*-*-* 00:00:00"
+# systemd timer schedule for hourly backups
+mariadb_backup_schedule_hourly: "*-*-* 01..23:00:00"
+# systemd timer schedule for weekly backups
+mariadb_backup_schedule_weekly: "Mon *-*-* 01:00:00"
+# systemd timer schedule for monthly backups
+mariadb_backup_schedule_monthly: "*-*-01 02:00:00"
+
+mariadb_backup_jobs:
+  - { type: "daily", schedule: "{{ mariadb_backup_schedule_daily }}" }
+  - { type: "hourly", schedule: "{{ mariadb_backup_schedule_hourly }}" }
+  - { type: "weekly", schedule: "{{ mariadb_backup_schedule_weekly }}" }
+  - { type: "monthly", schedule: "{{ mariadb_backup_schedule_monthly }}" }

@@ -13,6 +13,7 @@ osism apply opensearch
 osism apply memcached
 osism apply redis
 osism apply mariadb
+osism apply -e kolla deploy-mariadb-backup
 osism apply rabbitmq
 osism apply openvswitch
 osism apply ovn

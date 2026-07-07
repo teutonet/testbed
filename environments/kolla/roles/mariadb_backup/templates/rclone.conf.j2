@@ -1,0 +1,26 @@
+# Managed by Ansible (role: mariadb_backup).
+[{{ mariadb_backup_sftp_remote }}]
+type = sftp
+host = {{ mariadb_backup_node_address }}
+user = dragon
+{% if mariadb_backup_ssh_key %}
+key_file = {{ mariadb_backup_ssh_key }}
+{% endif %}
+shell_type = unix
+md5sum_command = md5sum
+sha1sum_command = sha1sum
+known_hosts_file = /root/.ssh/known_hosts
+
+[{{ mariadb_backup_s3_remote }}]
+type = s3
+provider = {{ mariadb_backup_s3_rclone_provider }}
+access_key_id = {{ mariadb_backup_s3_access_key_id }}
+secret_access_key = {{ mariadb_backup_s3_secret_access_key }}
+region = {{ mariadb_backup_s3_region }}
+endpoint = {{ mariadb_backup_s3_endpoint }}
+# Force list_objects_v2
+list_version = 2
+# Force path style to address bucket
+force_path_style = {{ (not mariadb_backup_s3_virtual_hosted_style_bucket | bool) | lower }}
+# Don't try to create a bucket
+no_check_bucket = true

@@ -1,0 +1,9 @@
+[Unit]
+Description=MariaDB backup ({{ item.type }})
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart={{ mariadb_backup_orchestrate_script }} {{ item.type }}

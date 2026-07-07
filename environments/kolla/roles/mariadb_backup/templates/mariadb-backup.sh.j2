@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Managed by Ansible (role: mariadb_backup).
+set -euo pipefail
+
+TYPE="${1:?usage: $(basename "$0") hourly|daily|weekly|monthly}"
+
+[ -d "{{ mariadb_backup_destination_dir_manager }}" ] || mkdir -p "{{ mariadb_backup_destination_dir_manager }}"
+
+# --- containerized rclone helper ---------------------------------------------
+rclone_run() {            # usage: rclone_run <rclone-subcommand-and-args...>
+  docker run --rm \
+    --name mariadb_backup_rclone \
+    --network host \
+    -e RCLONE_CONFIG=/config/rclone.conf \
+    -v {{ mariadb_backup_rclone_config_file }}:/config/rclone.conf:ro \
+    -v {{ mariadb_backup_ssh_key }}:{{ mariadb_backup_ssh_key }}:ro \
+    -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro \
+    -v "{{ mariadb_backup_destination_dir_manager }}:{{ mariadb_backup_destination_dir_manager }}" \
+    {{ mariadb_backup_rclone_image_full }} $*
+}
+
+case "$TYPE" in
+  daily)
+    sudo -u dragon osism apply facts # gather facts, use daily schedules because facts have a 24h TTL
+    sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=full -e mariadb_backup_host={{ mariadb_backup_node }}
+    ret="{{ mariadb_backup_retention_daily }}" ;;
+  hourly)
+    sudo -u dragon osism apply mariadb_backup -e mariadb_backup_type=incremental -e mariadb_backup_host={{ mariadb_backup_node }}
+    ret="{{ mariadb_backup_retention_hourly }}" ;;
+  weekly)
+    # promote last full backup to weekly backup
+    ret="{{ mariadb_backup_retention_weekly }}" ;;
+  monthly)
+    # promote last full backup to weekly backup
+    ret="{{ mariadb_backup_retention_monthly }}" ;;
+  *) echo "unknown type: $TYPE" >&2; exit 2 ;;
+esac
+
+# extract/encrypt (full/incr) or promote (weekly/monthly) on mariadb node
+{{ mariadb_backup_remote_exec }} {{ mariadb_backup_extract_script }} "$TYPE"
+
+# pull encrypted subtree from control node to manager disk (Copy 1)
+rclone_run copy \
+  "{{ mariadb_backup_sftp_remote }}:{{ mariadb_backup_destination_dir_mariadb }}/${TYPE}" \
+  "{{ mariadb_backup_destination_dir_manager }}/${TYPE}"
+
+# upload encrypted subtree from manager disk to offsite S3 (Copy 2)
+rclone_run copy \
+  "{{ mariadb_backup_destination_dir_manager }}/${TYPE}" \
+  "{{ mariadb_backup_s3_remote }}:{{ mariadb_backup_s3_bucket }}/${TYPE}" \
+{% if mariadb_backup_object_lock_mode +%}  --s3-object-lock-mode {{ mariadb_backup_object_lock_mode }} \
+  --s3-object-lock-retain-until-date "${ret}d"
+{% endif %}
+
+echo "mariadb-backup: ${TYPE} complete"
+
+# GC the disk copies (non-WORM); S3 is governed by Object Lock + lifecycle
+GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
+case "$TYPE" in
+  daily)
+      find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete || true;;
+  hourly)
+      find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_hourly }} -delete|| true;;
+  weekly)
+      find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_weekly }} -delete || true;;
+  monthly)
+      find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_monthly }} -delete || true;;
+  *) echo "unknown type: $TYPE" >&2; exit 2 ;;
+esac
+
+# Delete empty folders
+find "{{ mariadb_backup_destination_dir_manager }}" -type d -empty -delete || true
+{{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}" -type d -empty -delete || true
+
+echo "mariadb-backup: GC complete"
