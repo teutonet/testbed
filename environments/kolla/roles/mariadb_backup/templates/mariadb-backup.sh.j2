@@ -55,19 +55,20 @@ rclone_run copy \
 echo "mariadb-backup: ${TYPE} complete"
 
 # GC the disk copies (non-WORM); S3 is governed by Object Lock + lifecycle
+GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
 case "$TYPE" in
   daily)
-      find "{{ mariadb_backup_destination_dir_manager }}/daily" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_daily }} -delete || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_daily }} -delete || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_daily }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/daily" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_daily }} -delete || true;;
   hourly)
-      find "{{ mariadb_backup_destination_dir_manager }}/hourly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_hourly }} -delete || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_hourly }} -delete|| true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/hourly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_hourly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/hourly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_hourly }} -delete|| true;;
   weekly)
-      find "{{ mariadb_backup_destination_dir_manager }}/weekly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_weekly }} -delete || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_weekly }} -delete || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/weekly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_weekly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/weekly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_weekly }} -delete || true;;
   monthly)
-      find "{{ mariadb_backup_destination_dir_manager }}/monthly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_monthly }} -delete || true
-      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" -type f -name '*.mbs.gz.gpg' -mtime {{ mariadb_backup_retention_monthly }} -delete || true;;
+      find "{{ mariadb_backup_destination_dir_manager }}/monthly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_monthly }} -delete || true
+      {{ mariadb_backup_remote_exec }} find "{{ mariadb_backup_destination_dir_mariadb }}/monthly" $GC_COMMON_FILTER -mtime +{{ mariadb_backup_retention_monthly }} -delete || true;;
   *) echo "unknown type: $TYPE" >&2; exit 2 ;;
 esac
 
