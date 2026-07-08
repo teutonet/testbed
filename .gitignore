@@ -40,3 +40,4 @@ terraform/overrides/
 venv
 .idea
 wg-*.conf
+environments/.vault_pass
