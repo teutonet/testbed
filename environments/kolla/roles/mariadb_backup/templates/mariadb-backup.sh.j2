@@ -55,7 +55,7 @@ rclone_run copy \
 echo "mariadb-backup: ${TYPE} complete"
 
 # GC the disk copies (non-WORM); S3 is governed by Object Lock + lifecycle
-GC_COMMON_FILTER="-type f -name '*.mbs.gz.gpg'"
+GC_COMMON_FILTER="-type f -name *.mbs.gz.gpg"
 case "$TYPE" in
   daily)
       find "{{ mariadb_backup_destination_dir_manager }}/daily" $GC_COMMON_FILTER -mtime {{ mariadb_backup_retention_daily }} -delete || true
