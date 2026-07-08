@@ -21,11 +21,6 @@ if [[ $MANAGER_VERSION == "latest" ]]; then
     /opt/configuration/scripts/set-openstack-version.sh $OPENSTACK_VERSION
 fi
 
-# disable ceph-ansible if rook should be used for the ceph deployment
-if [[ $CEPH_STACK == "rook" ]]; then
-    echo "enable_ceph_ansible: false" >> /opt/configuration/environments/manager/configuration.yml
-fi
-
 # enable new kubernetes service
 if [[ $(semver $MANAGER_VERSION 7.0.0) -ge 0 || $MANAGER_VERSION == "latest" ]]; then
     echo "enable_osism_kubernetes: true" >> /opt/configuration/environments/manager/configuration.yml
@@ -54,10 +49,16 @@ fi
 
 cp /home/dragon/.ssh/id_rsa.pub /opt/ansible/secrets/id_rsa.operator.pub
 
+# Make the operator private key reachable inside the osism/seed container.
+# osism update manager runs the keypair play inside the seed container, which
+# bind-mounts only /opt/configuration; the host-path lookups in secrets.yml do
+# not resolve there. Place a copy in the config dir so the lookup finds it.
+mkdir -p /opt/configuration/environments/secrets
+cp /home/dragon/.ssh/id_rsa /opt/configuration/environments/secrets/id_rsa.operator
+chmod 600 /opt/configuration/environments/secrets/id_rsa.operator
+
 # wait for manager service
-if [[ $CEPH_STACK == "ceph-ansible" ]]; then
-    wait_for_container_healthy 60 ceph-ansible
-fi
+wait_for_container_healthy 60 ceph-ansible
 wait_for_container_healthy 60 kolla-ansible
 wait_for_container_healthy 60 osism-ansible
 
