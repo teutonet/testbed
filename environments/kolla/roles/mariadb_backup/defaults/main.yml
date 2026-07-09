@@ -6,7 +6,7 @@
 
 # --- Manager -> mariadb remote execution ------------------------------------
 # On which mariadb node should the backup be triggered
-mariadb_backup_node: ""
+mariadb_backup_node: "{{ groups['mariadb'][0] }}"
 # Location of the SSH key to access the mariadb node
 mariadb_backup_ssh_key: "/opt/ansible/secrets/id_rsa.operator"
 # IP address of the mariadb node
