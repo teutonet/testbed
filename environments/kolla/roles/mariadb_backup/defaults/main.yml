@@ -48,7 +48,7 @@ mariadb_backup_rclone_docker_registry: "ghcr.io"
 # Name of rclone image
 mariadb_backup_rclone_docker_image: "rclone/rclone"
 # Tag of rclone image
-mariadb_backup_rclone_docker_tag: "1.74.3"
+mariadb_backup_rclone_docker_tag: "1.74.4"
 # Full name of rclone docker image
 mariadb_backup_rclone_image_full: "{{ mariadb_backup_rclone_docker_registry }}/{{ mariadb_backup_rclone_docker_image }}:{{ mariadb_backup_rclone_docker_tag }}"
 # Path to save the rclone config
